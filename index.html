@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Luxe Reels</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,500;9..144,600&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+    </style>
+</head>
+<body>
+
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useMemo, useEffect, useRef } = React;
+
+        /* ------------------------------------------------------------------ */
+        /* Pure React SVG Components (No DOM-manipulation CDN conflicts)    */
+        /* ------------------------------------------------------------------ */
+        const Search = ({ size = 16, color = 'currentColor' }) => (
+          <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+        );
+
+        const X = ({ size = 16, color = 'currentColor' }) => (
+          <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        );
+
+        const Download = ({ size = 16, color = 'currentColor' }) => (
+          <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+          </svg>
+        );
+
+        const Lock = ({ size = 16, color = 'currentColor' }) => (
+          <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+          </svg>
+        );
+
+        const Check = ({ size = 16, color = 'currentColor' }) => (
+          <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+        );
+
+        const Crown = ({ size = 16, color = 'currentColor' }) => (
+          <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="m2 4 3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14"></path>
+          </svg>
+        );
+
+        const Circle = ({ size = 16, color = 'currentColor', fill = 'none' }) => (
+          <svg width={size} height={size} viewBox="0 0 24 24" fill={fill} stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+          </svg>
+        );
+
+        /* ------------------------------------------------------------------ */
+        /* Tokens                                                             */
+        /* ------------------------------------------------------------------ */
+        const C = {
+          bg: '#0A0A0C',
+          surface: '#141417',
+          surface2: '#1B1B1F',
+          line: '#2A2A2E',
+          gold: '#C6A15B',
+          goldDim: '#8C7239',
+          goldSoft: 'rgba(198,161,91,0.12)',
+          text: '#F3F1EC',
+          muted: '#8B8B92',
+          red: '#B5453C',
+        };
+
+        const CATEGORIES = ['All', 'Supercars', 'Mansions', 'Yachts', 'Interiors'];
+
+        const CLIPS = [
+          { id: 1, title: 'F1 Belgium Chicane', category: 'Supercars', duration: '0:26', res: '1080p', premium: false, videoUrl: './VID_20250726_120858587.mp4' },
+          { id: 2, title: 'F1 Belgium McLaren', category: 'Supercars', duration: '0:02', res: '1080p', premium: false, videoUrl: './VID_20250726_160156035.mp4' },
+          { id: 3, title: 'Coastal Supercar Rollout', category: 'Supercars', duration: '0:16', res: '720p', premium: false, videoUrl: './Supercar Rollout in Singapore.mp4' },
+          { id: 4, title: 'Maybach S-Class interior', category: 'Supercars', duration: '0:11', res: '4K', premium: true, videoUrl: './Maybach S-Class inside.mp4' },
+          { id: 5, title: 'Inside Pool Walkdown', category: 'Interiors', duration: '0:11', res: '720p', premium: false, videoUrl: './GiantPoolInteriorWalkdown.mp4' },
+          { id: 6, title: 'Blue Lamborghini', category: 'Supercars', duration: '0:11', res: '1080p', premium: false, videoUrl:'./BlueLamborghini.mp4' },
+          { id: 7, title: 'Super SUVs Driveby', category: 'Supercars', duration: '0:08', res: '4K', premium: true, videoUrl: './Lamborghini&BentleyFlybyOnBridge.mp4' },
+          { id: 8, title: 'Closed Waters', category: 'Yachts', duration: '0:10', res: '1080p', premium: false, videoUrl: './BoatInPool.mp4' },
+          { id: 9, title: 'Outside Pool Mansion', category: 'Mansions', duration: '0:07', res: '1080p', premium: false, videoUrl: './MansionOutsidePool.mp4' },
+          { id: 10, title: 'Orange Lamborghini Driveby', category: 'Supercars', duration: '0:04', res: '4K', premium: true, videoUrl: './OrangeLamborghiniDriveby.mp4' },
+          { id: 11, title: 'Tropical Mansion', category: 'Mansions', duration: '0:09', res: '1080p', premium: false, videoUrl: './TropicalMansion.mp4' },
+          { id: 12, title: 'Luxurious Living Room', category: 'Interiors', duration: '0:11', res: '1080p', premium: false, videoUrl: './LuxuryLivingRoom.mp4' },
+          { id: 13, title: 'Luxurious Kitchen', category: 'Interiors', duration: '0:11', res: '1080p', premium: false, videoUrl: './LuxuryKitchen.mp4' },
+          { id: 14, title: 'White Suburb Mansion', category: 'Mansions', duration: '0:12', res: '4K', premium: true, videoUrl: './WhiteSuburbMansion.mp4' },
+          { id: 15, title: 'Green Lamborghini', category: 'Supercars', duration: '1:18', res: '720p', premium: false, videoUrl: './GreenLamborghini.mp4' },
+          { id: 16, title: 'Poolside Aerial View', category: 'Mansions', duration: '0:05', res: '1080p', premium: false, videoUrl: './LuxuryPoolsideAerial.mp4' },
+          { id: 17, title: 'Mansion Poolside View', category: 'Mansions', duration: '0:20', res: '1080p', premium: false, videoUrl: './MansionPoolsideView.mp4' },
+          { id: 18, title: 'Blue Corvette', category: 'Supercars', duration: '0:06', res: '1080p', premium: false, videoUrl: './BlueCorvette.mp4' },
+          { id: 19, title: 'Gold Watch Upfront', category: 'Interiors', duration: '0:13', res: '4K', premium: true, videoUrl: './GoldWatchUpfront.mp4' },
+          { id: 20, title: 'Rolls Royce Front Logo', category: 'Supercars', duration: '0:31', res: '1080p', premium: false, videoUrl: './RollsRoyceFrontLogo.mp4' },
+          { id: 21, title: 'Forest Mansion Overview', category: 'Mansions', duration: '0:27', res: '1080p', premium: false, videoUrl: './ForestMansionOverview.mp4' },
+          { id: 22, title: 'Pool Aerial View', category: 'Mansions', duration: '0:08', res: '720p', premium: false, videoUrl: './PoolAerial.mp4' },
+          { id: 23, title: 'Fluo Green AMG', category: 'Supercars', duration: '0:08', res: '1080p', premium: false, videoUrl: './FluoGreenMercedesAMG.mp4' },
+          { id: 24, title: 'Blue Lamborghini Revuelto', category: 'Supercars', duration: '0:15', res: '1080p', premium: true, videoUrl: './BlueLamborghiniRevuelto.mp4' },
+          { id: 25, title: 'Red Ferrari Bumper', category: 'Supercars', duration: '0:27', res: '1080p', premium: false, videoUrl: './RedFerrariBumper.mp4' },
+          { id: 26, title: 'Orange Lamborghini', category: 'Supercars', duration: '0:10', res: '1080p', premium: false, videoUrl: './OrangeLamborghiniForest.mp4' },
+          { id: 27, title: 'White Lamborghini Downtown', category: 'Supercars', duration: '0:10', res: '720p', premium: false, videoUrl: './WhiteLamborghiniDowntown.mp4' },
+          { id: 28, title: 'Black Lamborghini Front in rain', category: 'Supercars', duration: '0:08', res: '4K', premium: true, videoUrl: './RainyBlackLamborghiniFront.mp4' }
+        ];
+
+        /* ------------------------------------------------------------------ */
+        /* Blueprint line-art                                                 */
+        /* ------------------------------------------------------------------ */
+        function Blueprint({ category }) {
+          const common = { fill: 'none', stroke: C.gold, strokeWidth: 1.3, strokeLinecap: 'round', strokeLinejoin: 'round' };
+          return (
+            <svg viewBox="0 0 200 110" className="w-2/3 h-2/3" style={{ opacity: 0.85 }}>
+              {category === 'Supercars' && (
+                <g {...common}>
+                  <path d="M18,78 L34,78 Q40,58 58,55 L82,40 Q104,32 128,36 L156,48 Q170,53 176,68 L184,70 L184,78 L168,78" />
+                  <path d="M18,78 L184,78" opacity="0.4" />
+                  <circle cx="52" cy="80" r="10" />
+                  <circle cx="150" cy="80" r="10" />
+                </g>
+              )}
+              {category === 'Mansions' && (
+                <g {...common}>
+                  <path d="M30,86 L30,50 L100,20 L170,50 L170,86 Z" />
+                  <path d="M30,50 L170,50" opacity="0.4" />
+                  <rect x="55" y="60" width="14" height="26" />
+                  <rect x="90" y="60" width="14" height="18" />
+                  <rect x="125" y="60" width="14" height="18" />
+                </g>
+              )}
+              {category === 'Yachts' && (
+                <g {...common}>
+                  <path d="M20,72 Q100,90 180,72 L168,86 Q100,98 32,86 Z" />
+                  <rect x="70" y="46" width="46" height="20" />
+                  <path d="M118,46 L118,20" />
+                  <path d="M118,20 L145,40" opacity="0.5" />
+                </g>
+              )}
+              {category === 'Interiors' && (
+                <g {...common}>
+                  <rect x="34" y="24" width="60" height="50" />
+                  <path d="M34,50 L94,50" opacity="0.4" />
+                  <path d="M120,86 L120,58 Q120,46 134,46 L152,46 Q166,46 166,58 L166,86 Z" />
+                  <path d="M120,72 L166,72" opacity="0.4" />
+                </g>
+              )}
+            </svg>
+          );
+        }
+
+        /* ------------------------------------------------------------------ */
+        /* Card                                                               */
+        /* ------------------------------------------------------------------ */
+        function ClipCard({ clip, onDownload, onLockedClick }) {
+          const [hover, setHover] = useState(false);
+          const [videoError, setVideoError] = useState(false); 
+          const videoRef = useRef(null);
+
+          useEffect(() => {
+            if (!videoRef.current) return;
+
+            if (hover) {
+              videoRef.current.play().catch((err) => {
+                if (err.name !== 'AbortError') {
+                  console.warn("Playback prevented:", err);
+                }
+              });
+            } else {
+              videoRef.current.pause();
+              videoRef.current.currentTime = 0; 
+            }
+          }, [hover]);
+
+          return (
+            <div
+              onMouseEnter={() => setHover(true)}
+              onMouseLeave={() => setHover(false)}
+              className="rounded-md overflow-hidden flex flex-col relative transition-all duration-300 ease-out hover:-translate-y-1.5 hover:scale-[1.02] hover:shadow-2xl hover:shadow-black/40 hover:z-10"
+              style={{ backgroundColor: C.surface, border: `1px solid ${C.line}` }}
+            >
+              <div
+                className="relative aspect-video flex items-center justify-center overflow-hidden"
+                style={{
+                  backgroundColor: '#101013',
+                  backgroundImage:
+                    'linear-gradient(rgba(198,161,91,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(198,161,91,0.06) 1px, transparent 1px)',
+                  backgroundSize: '14px 14px',
+                }}
+              >
+                <div className="absolute inset-3 pointer-events-none z-10">
+                  {['top-0 left-0 border-t border-l', 'top-0 right-0 border-t border-r', 'bottom-0 left-0 border-b border-l', 'bottom-0 right-0 border-b border-r'].map(
+                    (pos, i) => (
+                      <span
+                        key={i}
+                        className={`absolute w-3 h-3 ${pos}`}
+                        style={{ borderColor: C.gold, opacity: 0.7 }}
+                      />
+                    )
+                  )}
+                </div>
+
+                {clip.videoUrl && !videoError ? (
+                  <video 
+                    ref={videoRef}
+                    src={clip.videoUrl} 
+                    className="absolute inset-0 w-full h-full object-cover"
+                    loop 
+                    muted 
+                    playsInline
+                    onError={() => setVideoError(true)}
+                  />
+                ) : (
+                  <Blueprint category={clip.category} />
+                )}
+
+                <div
+                  className="absolute top-2 left-2 flex items-center gap-1.5 px-2 py-1 rounded z-10"
+                  style={{ backgroundColor: 'rgba(0,0,0,0.55)' }}
+                >
+                  <Circle size={7} fill={C.red} color={C.red} />
+                  <span className="text-[10px] tracking-wider" style={{ color: C.text, fontFamily: "'JetBrains Mono', monospace" }}>
+                    {clip.duration}
+                  </span>
+                </div>
+
+                {clip.premium && (
+                  <div
+                    className="absolute top-2 right-2 flex items-center gap-1.5 px-2 py-1 rounded z-10"
+                    style={{ backgroundColor: C.goldSoft, border: `1px solid ${C.goldDim}` }}
+                  >
+                    <Lock size={10} color={C.gold} />
+                    <span className="text-[10px] tracking-widest" style={{ color: C.gold, fontFamily: "'JetBrains Mono', monospace" }}>
+                      PRO
+                    </span>
+                  </div>
+                )}
+
+                {!hover && clip.videoUrl && !videoError && (
+                  <div
+                    className="absolute inset-0 flex items-center justify-center transition-opacity duration-300 z-10"
+                    style={{ backgroundColor: 'rgba(10,10,12,0.2)' }}
+                  >
+                    <div
+                      className="w-11 h-11 rounded-full flex items-center justify-center"
+                      style={{ border: `1px solid ${C.gold}`, backgroundColor: 'rgba(10,10,12,0.6)' }}
+                    >
+                      <div
+                        style={{
+                          width: 0,
+                          height: 0,
+                          borderTop: '7px solid transparent',
+                          borderBottom: '7px solid transparent',
+                          borderLeft: `11px solid ${C.gold}`,
+                          marginLeft: 3,
+                        }}
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="px-4 pt-3 pb-4 flex flex-col gap-3 flex-1">
+                <div>
+                  <p className="text-[10px] uppercase tracking-widest mb-1" style={{ color: C.goldDim, fontFamily: "'JetBrains Mono', monospace" }}>
+                    {clip.category}
+                  </p>
+                  <h3 className="text-base" style={{ color: C.text, fontFamily: "'Fraunces', serif", fontWeight: 500 }}>
+                    {clip.title}
+                  </h3>
+                </div>
+
+                <div className="flex items-center gap-3 text-xs" style={{ color: C.muted, fontFamily: "'JetBrains Mono', monospace" }}>
+                  <span>{clip.res}</span>
+                  <span style={{ color: C.line }}>|</span>
+                  <span>{clip.duration}</span>
+                  <span style={{ color: C.line }}>|</span>
+                  <span>No watermark</span>
+                </div>
+
+                <button
+                  onClick={() => (clip.premium ? onLockedClick(clip) : onDownload(clip))}
+                  className="mt-auto w-full flex items-center justify-center gap-2 py-2.5 rounded text-sm transition-colors cursor-pointer hover:opacity-90"
+                  style={
+                    clip.premium
+                      ? { border: `1px solid ${C.goldDim}`, color: C.gold, backgroundColor: 'transparent' }
+                      : { backgroundColor: C.gold, color: '#141417', fontWeight: 600, border: '1px solid transparent' }
+                  }
+                >
+                  {clip.premium ? <Lock size={14} /> : <Download size={14} />}
+                  {clip.premium ? 'Unlock to download' : 'Download'}
+                </button>
+              </div>
+            </div>
+          );
+        }
+
+        /* ------------------------------------------------------------------ */
+        /* Upsell modal                                                       */
+        /* ------------------------------------------------------------------ */
+        function VaultModal({ clip, onClose }) {
+          const features = [
+            '8K masters, not just 4K previews',
+            'Every clip, watermark-free, forever',
+            'New drops every week',
+            'Commercial usage license included',
+          ];
+
+          return (
+            <div
+              className="fixed inset-0 z-50 flex items-center justify-center p-4"
+              style={{ backgroundColor: 'rgba(6,6,7,0.75)' }}
+              onClick={onClose}
+            >
+              <div
+                onClick={(e) => e.stopPropagation()}
+                className="w-full max-w-md rounded-lg overflow-hidden relative"
+                style={{ backgroundColor: C.surface, border: `1px solid ${C.goldDim}` }}
+              >
+                <button
+                  onClick={onClose}
+                  className="absolute top-4 right-4 w-8 h-8 rounded-full flex items-center justify-center cursor-pointer hover:bg-neutral-800"
+                  style={{ backgroundColor: C.surface2, color: C.muted }}
+                >
+                  <X size={16} />
+                </button>
+
+                <div className="px-8 pt-10 pb-8">
+                  <div
+                    className="w-11 h-11 rounded flex items-center justify-center mb-5"
+                    style={{ backgroundColor: C.goldSoft, border: `1px solid ${C.goldDim}` }}
+                  >
+                    <Crown size={20} color={C.gold} />
+                  </div>
+
+                  <p className="text-[10px] uppercase tracking-widest mb-2" style={{ color: C.goldDim, fontFamily: "'JetBrains Mono', monospace" }}>
+                    {clip ? `Locked · ${clip.title}` : 'Vault access'}
+                  </p>
+                  <h2 className="text-2xl mb-2" style={{ color: C.text, fontFamily: "'Fraunces', serif", fontWeight: 500 }}>
+                    Unlock the Vault
+                  </h2>
+                  <p className="text-sm mb-6" style={{ color: C.muted }}>
+                    This clip is part of the full-resolution collection. One membership, every asset.
+                  </p>
+
+                  <div className="flex flex-col gap-3 mb-7">
+                    {features.map((f) => (
+                      <div key={f} className="flex items-start gap-2.5">
+                        <div className="mt-0.5" style={{ color: C.gold }}>
+                          <Check size={15} />
+                        </div>
+                        <span className="text-sm" style={{ color: C.text }}>{f}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div
+                    className="flex items-end justify-between px-4 py-3 rounded mb-5"
+                    style={{ backgroundColor: C.surface2, border: `1px solid ${C.line}` }}
+                  >
+                    <div>
+                      <span className="text-2xl" style={{ color: C.text, fontFamily: "'Fraunces', serif" }}>$19</span>
+                      <span className="text-sm" style={{ color: C.muted }}>/month</span>
+                    </div>
+                    <span className="text-xs line-through" style={{ color: C.muted, fontFamily: "'JetBrains Mono', monospace" }}>$39</span>
+                  </div>
+
+                  <button
+                    onClick={onClose}
+                    className="w-full py-3 rounded text-sm cursor-pointer hover:opacity-90"
+                    style={{ backgroundColor: C.gold, color: '#141417', fontWeight: 600 }}
+                  >
+                    Unlock Vault access
+                  </button>
+                  <p className="text-[11px] text-center mt-3" style={{ color: C.muted }}>
+                    Demo interface — no payment is processed.
+                  </p>
+                </div>
+              </div>
+            </div>
+          );
+        }
+
+        /* ------------------------------------------------------------------ */
+        /* Toast                                                              */
+        /* ------------------------------------------------------------------ */
+        function Toast({ message }) {
+          if (!message) return null;
+          return (
+            <div
+              className="fixed bottom-6 right-6 z-50 flex items-center gap-2 px-4 py-3 rounded shadow-lg animate-fade-in"
+              style={{ backgroundColor: C.surface, border: `1px solid ${C.goldDim}` }}
+            >
+              <Check size={15} color={C.gold} />
+              <span className="text-sm" style={{ color: C.text }}>{message}</span>
+            </div>
+          );
+        }
+
+        /* ------------------------------------------------------------------ */
+        /* Main Application                                                   */
+        /* ------------------------------------------------------------------ */
+        function LuxeReelsSite() {
+          const [query, setQuery] = useState('');
+          const [category, setCategory] = useState('All');
+          const [modalClip, setModalClip] = useState(null);
+          const [toast, setToast] = useState('');
+
+          useEffect(() => {
+            if (!toast) return;
+            const t = setTimeout(() => setToast(''), 4000); 
+            return () => clearTimeout(t);
+          }, [toast]);
+
+          const handleDownload = async (clip) => {
+            if (!clip.videoUrl) {
+              setToast(`Draft mock — No file exists yet for “${clip.title}”`);
+              return;
+            }
+
+            setToast(`Preparing download: “${clip.title}”...`);
+
+            try {
+              const response = await fetch(clip.videoUrl);
+              if (!response.ok) throw new Error('Network response failure');
+              
+              const blob = await response.blob();
+              const blobUrl = window.URL.createObjectURL(blob);
+              
+              const link = document.createElement('a');
+              link.href = blobUrl;
+              link.download = clip.videoUrl.split('/').pop() || `${clip.title}.mp4`;
+              document.body.appendChild(link);
+              link.click();
+              
+              document.body.removeChild(link);
+              window.URL.revokeObjectURL(blobUrl);
+              
+              setToast(`Successfully downloaded “${clip.title}”!`);
+            } catch (error) {
+              console.warn("Forced download failed. Falling back...", error);
+              
+              const link = document.createElement('a');
+              link.href = clip.videoUrl;
+              link.download = clip.videoUrl.split('/').pop();
+              link.target = '_blank';
+              document.body.appendChild(link);
+              link.click();
+              document.body.removeChild(link);
+              
+              setToast(`Opened “${clip.title}” fallback link.`);
+            }
+          };
+
+          const filtered = useMemo(() => {
+            return CLIPS.filter((c) => {
+              const matchesCategory = category === 'All' || c.category === category;
+              const matchesQuery = c.title.toLowerCase().includes(query.toLowerCase());
+              return matchesCategory && matchesQuery;
+            });
+          }, [query, category]);
+
+          return (
+            <div style={{ backgroundColor: C.bg, minHeight: '100vh', fontFamily: "'Inter', sans-serif" }}>
+
+              {/* NAV */}
+              <header className="flex items-center justify-between px-6 md:px-12 py-5" style={{ borderBottom: `1px solid ${C.line}` }}>
+                <div className="flex items-center gap-2">
+                  <div className="w-7 h-7 rounded flex items-center justify-center" style={{ border: `1px solid ${C.gold}` }}>
+                    <div style={{ width: 8, height: 8, backgroundColor: C.gold, borderRadius: '50%' }} />
+                  </div>
+                  <span className="text-lg tracking-wide" style={{ color: C.text, fontFamily: "'Fraunces', serif" }}>
+                    LUXE&nbsp;REELS
+                  </span>
+                </div>
+                <button
+                  onClick={() => setModalClip({ title: '' })}
+                  className="hidden sm:flex items-center gap-2 px-4 py-2 rounded text-sm cursor-pointer hover:bg-neutral-900 transition-colors"
+                  style={{ border: `1px solid ${C.goldDim}`, color: C.gold }}
+                >
+                  <Crown size={14} /> Vault
+                </button>
+              </header>
+
+              {/* HERO */}
+              <section className="relative px-6 md:px-12 pt-16 pb-24 overflow-hidden">
+                <div
+                  className="absolute inset-0 pointer-events-none"
+                  style={{
+                    backgroundImage:
+                      'linear-gradient(rgba(198,161,91,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(198,161,91,0.05) 1px, transparent 1px)',
+                    backgroundSize: '48px 48px',
+                    maskImage: 'linear-gradient(to bottom, black, transparent)',
+                  }}
+                />
+                <div className="relative max-w-3xl">
+                  <p className="text-xs uppercase tracking-[0.3em] mb-5" style={{ color: C.goldDim, fontFamily: "'JetBrains Mono', monospace" }}>
+                    Free footage archive
+                  </p>
+                  <h1
+                    className="text-4xl sm:text-5xl md:text-6xl leading-[1.05] mb-6"
+                    style={{ color: C.text, fontFamily: "'Fraunces', serif", fontWeight: 500 }}
+                  >
+                    Cinematic clips of<br />
+                    <span style={{ color: C.gold, fontStyle: 'italic' }}>supercars &amp; estates</span>,<br />
+                    no watermark.
+                  </h1>
+                  <p className="text-base max-w-md mb-10" style={{ color: C.muted }}>
+                    A growing archive of luxury b-roll — free to browse, free to download.
+                    The Vault unlocks the full-resolution masters.
+                  </p>
+
+                  {/* search */}
+                  <div
+                    className="flex items-center gap-3 px-4 py-3 rounded-md max-w-lg"
+                    style={{ backgroundColor: C.surface, border: `1px solid ${C.line}` }}
+                  >
+                    <Search size={17} color={C.muted} />
+                    <input
+                      value={query}
+                      onChange={(e) => setQuery(e.target.value)}
+                      placeholder="Search clips — “villa”, “redline”, “yacht”…"
+                      className="bg-transparent outline-none text-sm flex-1"
+                      style={{ color: C.text }}
+                    />
+                  </div>
+                </div>
+              </section>
+
+              {/* FILTERS */}
+              <section className="px-6 md:px-12 flex flex-wrap gap-2 mb-8">
+                {CATEGORIES.map((cat) => {
+                  const active = cat === category;
+                  return (
+                    <button
+                      key={cat}
+                      onClick={() => setCategory(cat)}
+                      className="px-4 py-2 rounded-full text-sm transition-colors cursor-pointer"
+                      style={
+                        active
+                          ? { backgroundColor: C.gold, color: '#141417', fontWeight: 600 }
+                          : { border: `1px solid ${C.line}`, color: C.muted }
+                      }
+                    >
+                      {cat}
+                    </button>
+                  );
+                })}
+              </section>
+
+              {/* GRID */}
+              <section className="px-6 md:px-12 pb-20">
+                {filtered.length === 0 ? (
+                  <div className="text-center py-24" style={{ color: C.muted }}>
+                    <p className="text-sm">No clips match “{query}”. Try another search or category.</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+                    {filtered.map((clip) => (
+                      <ClipCard
+                        key={clip.id}
+                        clip={clip}
+                        onDownload={handleDownload}
+                        onLockedClick={(c) => setModalClip(c)}
+                      />
+                    ))}
+                  </div>
+                )}
+              </section>
+
+              <footer className="px-6 md:px-12 py-8 text-xs" style={{ borderTop: `1px solid ${C.line}`, color: C.muted }}>
+                LUXE REELS — July 2026
+              </footer>
+
+              {modalClip && <VaultModal clip={modalClip.title ? modalClip : null} onClose={() => setModalClip(null)} />}
+              <Toast message={toast} />
+            </div>
+          );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<LuxeReelsSite />);
+    </script>
+</body>
+</html>
